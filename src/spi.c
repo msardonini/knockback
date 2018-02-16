@@ -52,56 +52,6 @@ uint8_t default_tx[] = {
 uint8_t default_rx[ARRAY_SIZE(default_tx)] = {0, };
 char *input_tx;
 
-static void hex_dump(const void *src, size_t length, size_t line_size, char *prefix)
-{
-	int i = 0;
-	const unsigned char *address = src;
-	const unsigned char *line = address;
-	unsigned char c;
-
-	printf("%s | ", prefix);
-	while (length-- > 0) {
-		printf("%02X ", *address++);
-		if (!(++i % line_size) || (length == 0 && i % line_size)) {
-			if (length == 0) {
-				while (i++ % line_size)
-					printf("__ ");
-			}
-			printf(" | ");  /* right close */
-			while (line < address) {
-				c = *line++;
-				printf("%c", (c < 33 || c == 255) ? 0x2E : c);
-			}
-			printf("\n");
-			if (length > 0)
-				printf("%s | ", prefix);
-		}
-	}
-}
-
-/*
- *  Unescape - process hexadecimal escape character
- *      converts shell input "\x23" -> 0x23
- */
-static int unescape(char *_dst, char *_src, size_t len)
-{
-	int ret = 0;
-	char *src = _src;
-	char *dst = _dst;
-	unsigned int ch;
-
-	while (*src) {
-		if (*src == '\\' && *(src+1) == 'x') {
-			sscanf(src + 2, "%2x", &ch);
-			src += 4;
-			*dst++ = (unsigned char)ch;
-		} else {
-			*dst++ = *src++;
-		}
-		ret++;
-	}
-	return ret;
-}
 
 static void transfer(uint8_t const *tx, uint8_t const *rx, size_t len)
 {
@@ -135,9 +85,9 @@ static void transfer(uint8_t const *tx, uint8_t const *rx, size_t len)
 	if (ret < 1)
 		pabort("can't send spi message");
 
-	if (verbose)
-		hex_dump(tx, len, 32, "TX");
-	hex_dump(rx, len, 32, "RX");
+	// if (verbose)
+	// 	hex_dump(tx, len, 32, "TX");
+	// hex_dump(rx, len, 32, "RX");
 }
 
 static void print_usage(const char *prog)
@@ -255,8 +205,6 @@ static void parse_opts(int argc, char *argv[])
 int init_spi(int argc, char *argv[])
 {
 	int ret = 0;
-	uint8_t *tx;
-	uint8_t *rx;
 
 	parse_opts(argc, argv);
 
@@ -326,6 +274,7 @@ void spi_transfer_regs(uint8_t reg, const void *out, void *in, size_t len)
 {
     transfer(&reg, NULL, 1);
     transfer(out, in, len);
+    printf("reg 0x%02x\n", reg);
 }
 
 
