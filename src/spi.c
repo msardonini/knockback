@@ -37,6 +37,9 @@ static uint32_t speed = 500000;
 static uint16_t delay;
 static int verbose;
 
+
+int fd;
+
 uint8_t default_tx[] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0x40, 0x00, 0x00, 0x00, 0x00, 0x95,
@@ -100,7 +103,7 @@ static int unescape(char *_dst, char *_src, size_t len)
 	return ret;
 }
 
-static void transfer(int fd, uint8_t const *tx, uint8_t const *rx, size_t len)
+static void transfer(uint8_t const *tx, uint8_t const *rx, size_t len)
 {
 	int ret;
 
@@ -249,13 +252,11 @@ static void parse_opts(int argc, char *argv[])
 	}
 }
 
-int main(int argc, char *argv[])
+int init_spi(int argc, char *argv[])
 {
 	int ret = 0;
-	int fd;
 	uint8_t *tx;
 	uint8_t *rx;
-	int size;
 
 	parse_opts(argc, argv);
 
@@ -300,19 +301,33 @@ int main(int argc, char *argv[])
 	printf("bits per word: %d\n", bits);
 	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
 
-	if (input_tx) {
-		size = strlen(input_tx+1);
-		tx = malloc(size);
-		rx = malloc(size);
-		size = unescape((char *)tx, input_tx, size);
-		transfer(fd, tx, rx, size);
-		free(rx);
-		free(tx);
-	} else {
-		transfer(fd, default_tx, default_rx, sizeof(default_tx));
-	}
-
-	close(fd);
-
 	return ret;
 }
+
+
+
+
+uint8_t spi_transfer_byte(uint8_t out)
+{
+    uint8_t in;
+    transfer(&out, &in, 1);
+    return in;
+}
+
+
+uint8_t spi_transfer_reg(uint8_t reg, uint8_t out)
+{
+    transfer(&reg, NULL, 1);
+    return spi_transfer_byte(out);
+}
+
+
+void spi_transfer_regs(uint8_t reg, const void *out, void *in, size_t len)
+{
+    transfer(&reg, NULL, 1);
+    transfer(out, in, len);
+}
+
+
+
+
