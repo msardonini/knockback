@@ -85,6 +85,8 @@ static void transfer(uint8_t const *tx, uint8_t const *rx, size_t len)
 	if (ret < 1)
 		pabort("can't send spi message");
 
+
+    // printf("rx is %s\n", rx);
 	// if (verbose)
 	// 	hex_dump(tx, len, 32, "TX");
 	// hex_dump(rx, len, 32, "RX");
@@ -265,16 +267,33 @@ uint8_t spi_transfer_byte(uint8_t out)
 
 uint8_t spi_transfer_reg(uint8_t reg, uint8_t out)
 {
-    transfer(&reg, NULL, 1);
-    return spi_transfer_byte(out);
+	uint8_t dummy_rx[2], dummy_tx[2];
+
+	dummy_tx[0] = reg;
+	dummy_tx[1] = out;
+    transfer(dummy_tx, dummy_rx, 2);
+    // printf("receive val 0x%02x\n", dummy_rx[1]);
+    return dummy_rx[1];
 }
 
 
 void spi_transfer_regs(uint8_t reg, const void *out, void *in, size_t len)
 {
-    transfer(&reg, NULL, 1);
-    transfer(out, in, len);
-    printf("reg 0x%02x\n", reg);
+	size_t buf_len = len + 1;
+
+	uint8_t dummy_rx[buf_len];
+	uint8_t dummy_tx[buf_len];
+    // transfer(&reg, NULL, 1);
+    // transfer(&reg, &dummy_rx, 1);
+    // usleep(2);
+	dummy_tx[0] = reg;
+	if (out != NULL)
+		memcpy(&dummy_tx[1], out, len);
+	else
+		memset(&dummy_tx[1], 0, len);
+
+	transfer(dummy_tx, dummy_rx, buf_len);
+	memcpy(in, &dummy_rx[1], len);
 }
 
 

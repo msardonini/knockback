@@ -48,7 +48,7 @@ uint8_t spi_transfer_reg(uint8_t reg, uint8_t out);
  * @param[out] in       buffer to read into, set NULL if only sending
  * @param[in]  len      number of bytes to transfer
  */
-void spi_transfer_regs(uint8_t reg, const void *out, void *in, size_t len);
+void spi_transfer_regs(uint8_t reg, const void *out, uint8_t *in, size_t len);
 
 
 

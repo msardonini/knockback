@@ -879,6 +879,10 @@ int lis3dh_set_int1(const uint8_t mode);
  */
 int lis3dh_get_fifo_level();
 
+
+
+int lis3dh_set_param_check(const uint8_t reg, const uint8_t val);
+
 #ifdef __cplusplus
 }
 #endif

@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "lis3dh.h"
 #include "spi.h"
@@ -38,53 +39,68 @@ int16_t scale_factor = 8;
 
 int lis3dh_init()
 {
-    uint8_t test = 0xFE;
-
-    // /* initialize the chip select line */
-    // if (spi_init_cs(dev->spi, dev->cs) != SPI_OK) {
-    //     DEBUG("[lis3dh] error while initializing CS pin\n");
-    //     return -1;
-    // }
+    uint8_t test = 0x00;
 
     /* test connection to the device */
     lis3dh_read_regs(LIS3DH_REG_WHO_AM_I, 1, &test);
     if (test != LIS3DH_WHO_AM_I_RESPONSE) {
         /* chip is not responding correctly */
         printf("[lis3dh] error reading the who am i reg [0x%02x]\n", (int)test);
-        // return -1;
+        return -1;
     }
 
     /* Clear all settings */
-    lis3dh_write_reg(LIS3DH_REG_CTRL_REG1, LIS3DH_CTRL_REG1_XYZEN_MASK);
+    lis3dh_set_param_check(LIS3DH_REG_CTRL_REG1, LIS3DH_CTRL_REG1_XYZEN_MASK | LIS3DH_CTRL_REG1_LPEN_MASK);
     /* Disable HP filter */
-    lis3dh_write_reg(LIS3DH_REG_CTRL_REG2, 0);
+    lis3dh_set_param_check(LIS3DH_REG_CTRL_REG2, 0);
     /* Disable INT1 interrupt sources */
-    lis3dh_write_reg(LIS3DH_REG_CTRL_REG3, 0);
-    /* Set block data update and little endian, set Normal mode (LP=0, HR=1) */
-    lis3dh_write_reg(LIS3DH_REG_CTRL_REG4,
+    lis3dh_set_param_check(LIS3DH_REG_CTRL_REG3, 0);
+     // Set block data update and little endian, set Normal mode (LP=0, HR=1) 
+    lis3dh_set_param_check(LIS3DH_REG_CTRL_REG4,
                      (LIS3DH_CTRL_REG4_BDU_ENABLE |
                       LIS3DH_CTRL_REG4_BLE_LITTLE_ENDIAN |
                       LIS3DH_CTRL_REG4_HR_MASK));
     /* Disable FIFO */
-    lis3dh_write_reg(LIS3DH_REG_CTRL_REG5, 0);
+    lis3dh_set_param_check(LIS3DH_REG_CTRL_REG5, 0);
     /* Reset INT2 settings */
-    lis3dh_write_reg(LIS3DH_REG_CTRL_REG6, 0);
+    lis3dh_set_param_check(LIS3DH_REG_CTRL_REG6, 0);
 
     /* Configure scale */
-    lis3dh_set_scale(scale_factor);
+    if(lis3dh_set_scale(scale_factor))
+    {
+        printf("Error! set svale failed");
+        return -1;
+    }
+
+
+    /*uint8_t tmp;
+    while (1)
+    {
+
+        lis3dh_read_regs(LIS3DH_REG_OUT_X_L, 1, &tmp);
+    }*/
 
     return 0;
 }
 
+
 int lis3dh_read_xyz(lis3dh_data_t *acc_data)
 {
+
     uint8_t i;
     /* Set READ MULTIPLE mode */
-    static const uint8_t addr = (LIS3DH_REG_OUT_X_L | LIS3DH_SPI_READ_MASK |
+    static const uint8_t addr = (LIS3DH_REG_STATUS_REG | LIS3DH_SPI_READ_MASK |
                                  LIS3DH_SPI_MULTI_MASK);
+    uint8_t read_buf[7];
 
     /* Perform the transaction */
-    spi_transfer_regs(addr, NULL, acc_data, sizeof(lis3dh_data_t));
+    spi_transfer_regs(addr, NULL, (void*)read_buf, sizeof(lis3dh_data_t)+1);
+
+    if (!(read_buf[0] & LIS3DH_STATUS_REG_ZYXDA_MASK))
+        return -1;
+
+
+    memcpy(acc_data, &read_buf[1], 6);
 
     /* Scale to milli-G */
     for (i = 0; i < 3; ++i) {
@@ -206,6 +222,22 @@ int lis3dh_get_fifo_level()
 }
 
 
+int lis3dh_set_param_check(const uint8_t reg, const uint8_t val)
+{
+    uint8_t read_val;
+    lis3dh_write_reg(reg, val);
+
+    lis3dh_read_regs(reg, 1, &read_val);
+
+    if (read_val != val)
+    {
+        printf("Error! Failure to ack param\n");
+        return -1;
+    }
+    return 0;
+}
+
+
 /**
  * @brief Read sequential registers from the LIS3DH.
  *
@@ -225,6 +257,7 @@ static int lis3dh_read_regs(const uint8_t reg, const uint8_t len, uint8_t *buf)
 
     /* Perform the transaction */
     spi_transfer_regs(addr, NULL, buf, (size_t)len);
+
 
     return 0;
 }
