@@ -15,5 +15,6 @@ add_compile_options(
 add_definitions(-DREAD_LIS3DH_ROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
 
 
-add_subdirectory(src)
+add_subdirectory(src/lis3dh)
+add_subdirectory(src/mpu9250)
 	
