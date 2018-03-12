@@ -36,7 +36,7 @@
 struct ulogDataMessage
 {
 	uint64_t timestamp;
-	uint18_t acceldata[3];
+	uint16_t acceldata[3];
 };
 
 

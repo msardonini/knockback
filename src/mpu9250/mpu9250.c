@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "mpu9250.h"
 #include "spi.h"
@@ -39,6 +40,10 @@ int16_t scale_factor = 8;
 
 int mpu9250_init()
 {
+
+    mpu9250_write_reg(PWR_MGMT_1, H_RESET);
+    usleep(10000);
+
     uint8_t test = 0x00;
 
     /* test connection to the device */
@@ -49,8 +54,28 @@ int mpu9250_init()
         return -1;
     }
 
+    uint8_t tmp[6];
+    mpu9250_write_reg(0x38, 0x01);
+    lis3dh_read_regs(0x38, 1, tmp);
 
-    mpu9250_write_reg(ACCEL_CONFIG_2, 0x01);
+    printf("interrupt register is 0x%02x\n", tmp[0]);
+
+    uint16_t offset_wr = 0xE300;
+
+
+    mpu9250_write_reg(XA_OFFSET_H, (offset_wr >> 8));
+    mpu9250_write_reg(XA_OFFSET_L, ((offset_wr & 0xFF) << 1));
+
+    lis3dh_read_regs(XA_OFFSET_H, 6, tmp);
+
+    // uint16_t offset = (tmp[0] << 7) | ((tmp[1] & 0xFE) << 1);
+    // uint16_t offset = (tmp[0] << 7) | (tmp[1] & 0x7F);
+
+    printf("X offset is %x, %x\n" , tmp[4], tmp[5]);
+
+
+    mpu9250_write_reg(ACCEL_CONFIG, ACCEL_FSR_CFG_8G);
+    // mpu9250_write_reg(ACCEL_CONFIG_2, 0x00);
     mpu9250_write_reg(SMPLRT_DIV, 0x00);
 
     return 0;
@@ -65,6 +90,8 @@ int read_accel_data(int16_t data[3])
     data[0] = (int16_t)(((uint16_t)buf[0]<<8)|buf[1]);
     data[1] = (int16_t)(((uint16_t)buf[2]<<8)|buf[3]);
     data[2] = (int16_t)(((uint16_t)buf[4]<<8)|buf[5]);
+
+
 
     return 0;
 }

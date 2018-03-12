@@ -12,7 +12,8 @@ add_compile_options(
 	-Wno-unused-parameter
 	)
 
-add_definitions(-DREAD_LIS3DH_ROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
+add_definitions(-DROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
+
 
 
 add_subdirectory(src/lis3dh)
