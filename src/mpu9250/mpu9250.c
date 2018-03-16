@@ -50,7 +50,7 @@ int mpu9250_init()
     lis3dh_read_regs(WHO_AM_I_MPU9250, 1, &test);
     if (test != 0x73) {
         /* chip is not responding correctly */
-        printf("[lis3dh] error reading the who am i reg [0x%02x]\n", (int)test);
+        printf("[mpu9250] error reading the who am i reg [0x%02x]\n", (int)test);
         return -1;
     }
 

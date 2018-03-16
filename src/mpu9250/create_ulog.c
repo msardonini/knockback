@@ -27,7 +27,7 @@ static void writeHeader();
 static int createLogFile();
 
 //Global Variables
-int fd_ulog;
+FILE  *fd_ulog;
 
 int initUlog()
 {
@@ -50,7 +50,7 @@ int initUlog()
 
 void closeLogFile()
 {
-	close(fd_ulog);
+	fclose(fd_ulog);
 }
 
 
@@ -110,9 +110,9 @@ static int createLogFile()
 	//Finally finish off the logger filepath 
 	strcat(logger_filepath,"/acceldata.ulog");
 
-	fd_ulog = open(logger_filepath, O_RDWR | O_TRUNC | O_CREAT);
+	fd_ulog = fopen(logger_filepath, "w+");
 
-	if (fd_ulog < 0)
+	if (fd_ulog == NULL)
 	{
 		printf("Error! Could not open file\n");
 		return -1;
@@ -188,5 +188,5 @@ static uint64_t getTimeMircos()
 
 static int writeMessage(void* buf, size_t size)
 {
-	return write(fd_ulog, buf, size);
+	return fwrite(buf, 1, size, fd_ulog);
 }
