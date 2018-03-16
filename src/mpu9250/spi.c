@@ -30,7 +30,7 @@ static void pabort(const char *s)
 	abort();
 }
 
-static const char *device = "/dev/spidev0.1";
+static const char *device = "/dev/spidev0.0";
 static uint32_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 1000000;
@@ -247,6 +247,7 @@ int init_spi(int argc, char *argv[])
 	if (ret == -1)
 		pabort("can't get max speed hz");
 
+	mode = 0x03;
 	printf("spi mode: 0x%x\n", mode);
 	printf("bits per word: %d\n", bits);
 	printf("max speed: %d Hz (%d KHz)\n", speed, speed/1000);
