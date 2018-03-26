@@ -3,6 +3,7 @@
 
 
 set(READ_MPU9250_SRC
+	bc118.c
 	create_ulog.c
 	mpu9250.c
 	spi.c

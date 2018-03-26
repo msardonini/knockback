@@ -58,7 +58,6 @@ int mpu9250_init()
     mpu9250_write_reg(0x38, 0x01);
     lis3dh_read_regs(0x38, 1, tmp);
 
-    printf("interrupt register is 0x%02x\n", tmp[0]);
 
     uint16_t offset_wr = 0xE300;
 
@@ -71,7 +70,6 @@ int mpu9250_init()
     // uint16_t offset = (tmp[0] << 7) | ((tmp[1] & 0xFE) << 1);
     // uint16_t offset = (tmp[0] << 7) | (tmp[1] & 0x7F);
 
-    printf("X offset is %x, %x\n" , tmp[4], tmp[5]);
 
 
     mpu9250_write_reg(ACCEL_CONFIG, ACCEL_FSR_CFG_8G);
